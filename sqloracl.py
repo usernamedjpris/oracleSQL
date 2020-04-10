@@ -15,7 +15,7 @@ def http_request(target, injtxt):
     if target.method == "GET":
         r = requests.get(injected_target.url, params=payload_str)
     elif target.method == "POST":
-        r = requests.post(injected_target.url, data=payload_str)
+        r = requests.post(injected_target.url, data=injected_target.payload)
     return r   
 
 
@@ -45,10 +45,10 @@ def main():
         exit(180) # invalid
     elif r.text != target.defaultPage: # l'injection est sûre (facultatif)
         print("[oracleSQL] target sent a different response to the default one 🍾(ﾟヮﾟ☜)")
-        return 0 # valid        
+        exit(0) # valid        
     else:
         print("[oracleSQL] not able to determine if \"" + injtxt + "\" was undoubtedly invalid, same page as default ¯\(°_o)/¯")
-        return 0 # default    
+        exit(0) # default    
 
 
 if __name__ == "__main__":
