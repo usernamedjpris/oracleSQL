@@ -42,7 +42,7 @@ def main():
     print('URL: ' + r.url)
     if r.text.find("error")>= 0:    
         print("[oracleSQL] target raised error ┗( T﹏T )┛")
-        return 180 # invalid
+        exit(180) # invalid
     elif r.text != target.defaultPage: # l'injection est sûre (facultatif)
         print("[oracleSQL] target sent a different response to the default one 🍾(ﾟヮﾟ☜)")
         return 0 # valid        
