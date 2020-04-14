@@ -49,23 +49,33 @@ def main():
 
     if ErrMode == 'Spreadsheet':
         if r.text.find("You have an error in your SQL syntax;")>= 0:    
-            print("[oracleSQL] target raised error ┗( T﹏T )┛")
+            print("[oracleSQL] exit(180) target raised error ┗( T﹏T )┛")
             exit(180) # invalid
         elif r.text != target.defaultPage: # l'injection est sûre (facultatif)
-            print("[oracleSQL] target sent a different response to the default one 🍾(ﾟヮﾟ☜)")
+            print("[oracleSQL] exit(0) target sent a different response to the default one 🍾(ﾟヮﾟ☜)")
             exit (0) # valid        
         else:
-            print("[oracleSQL] not able to determine if \"" + injtxt + "\" was undoubtedly invalid, same page as default ¯\(°_o)/¯")
+            print("[oracleSQL] exit(0) not able to determine if \"" + injtxt + "\" was undoubtedly invalid, same page as default ¯\(°_o)/¯")
+            exit (0) # default
+    elif ErrMode == 'MySQL_FR':
+        if r.text.find("Erreur de syntaxe")>= 0:    
+            print("[oracleSQL] exit(180) target raised error ┗( T﹏T )┛")
+            exit(180) # invalid
+        elif r.text != target.defaultPage: # l'injection est sûre (facultatif)
+            print("[oracleSQL] exit(0) target sent a different response to the default one 🍾(ﾟヮﾟ☜)")
+            exit (0) # valid        
+        else:
+            print("[oracleSQL] exit(0) not able to determine if \"" + injtxt + "\" was undoubtedly invalid, same page as default ¯\(°_o)/¯")
             exit (0) # default
     else:
         if r.text.find("error")>= 0:    
-            print("[oracleSQL] target raised error ┗( T﹏T )┛")
+            print("[oracleSQL] exit(180) target raised error ┗( T﹏T )┛")
             exit(180) # invalid
         elif r.text != target.defaultPage: # l'injection est sûre (facultatif)
-            print("[oracleSQL] target sent a different response to the default one 🍾(ﾟヮﾟ☜)")
+            print("[oracleSQL] exit(0) target sent a different response to the default one 🍾(ﾟヮﾟ☜)")
             exit (0) # valid        
         else:
-            print("[oracleSQL] not able to determine if \"" + injtxt + "\" was undoubtedly invalid, same page as default ¯\(°_o)/¯")
+            print("[oracleSQL] exit(0) not able to determine if \"" + injtxt + "\" was undoubtedly invalid, same page as default ¯\(°_o)/¯")
             exit (0) # default    
 
 
