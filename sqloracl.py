@@ -1,4 +1,5 @@
 # coding:utf-8
+#!/usr/bin/env python3
 import requests
 import copy
 import sys
@@ -11,7 +12,7 @@ def http_request(target, injtxt):
     injected_target = copy.deepcopy(target)
     injected_target.payload[target.vulnparam] = target.payload[target.vulnparam] + injtxt
     payload_str = "&".join("%s=%s" % (k, v) for k, v in injected_target.payload.items())
-    
+     #print("YO" + payload_str)
     if target.method == "GET":
         r = requests.get(injected_target.url, params=payload_str)
     elif target.method == "POST":
@@ -32,7 +33,12 @@ class HttpTarget:
 # Oracle function
 def main():
     """return 0 only if injtxt is syntactically valid"""
-    url, method, vulnparam, injtxt = sys.argv[1], sys.argv[2], sys.argv[4], sys.argv[5]
+    if (len(sys.argv) == 6):
+        url, method, vulnparam, injtxt = sys.argv[1], sys.argv[2], sys.argv[4], sys.argv[5]
+        ErrMode = 'default'
+    elif (len(sys.argv) == 7):
+        url, method, vulnparam, injtxt = sys.argv[1], sys.argv[2], sys.argv[4], sys.argv[5]
+        ErrMode = sys.argv[6]
 
     payload = ast.literal_eval(sys.argv[3])
     
@@ -40,15 +46,26 @@ def main():
     r = http_request(target, injtxt)
 
     print('URL: ' + r.url)
-    if r.text.find("error")>= 0:    
-        print("[oracleSQL] target raised error ┗( T﹏T )┛")
-        exit(180) # invalid
-    elif r.text != target.defaultPage: # l'injection est sûre (facultatif)
-        print("[oracleSQL] target sent a different response to the default one 🍾(ﾟヮﾟ☜)")
-        return 0 # valid        
+    if ErrMode == 'Spreadsheet':
+        if r.text.find("You have an error in your SQL syntax;")>= 0:    
+            print("[oracleSQL] target raised error ┗( T﹏T )┛")
+            exit(180) # invalid
+        elif r.text != target.defaultPage: # l'injection est sûre (facultatif)
+            print("[oracleSQL] target sent a different response to the default one 🍾(ﾟヮﾟ☜)")
+            exit (0) # valid        
+        else:
+            print("[oracleSQL] not able to determine if \"" + injtxt + "\" was undoubtedly invalid, same page as default ¯\(°_o)/¯")
+            exit (0) # default
     else:
-        print("[oracleSQL] not able to determine if \"" + injtxt + "\" was undoubtedly invalid, same page as default ¯\(°_o)/¯")
-        return 0 # default    
+        if r.text.find("error")>= 0:    
+            print("[oracleSQL] target raised error ┗( T﹏T )┛")
+            exit(180) # invalid
+        elif r.text != target.defaultPage: # l'injection est sûre (facultatif)
+            print("[oracleSQL] target sent a different response to the default one 🍾(ﾟヮﾟ☜)")
+            exit (0) # valid        
+        else:
+            print("[oracleSQL] not able to determine if \"" + injtxt + "\" was undoubtedly invalid, same page as default ¯\(°_o)/¯")
+            exit (0) # default    
 
 
 if __name__ == "__main__":
