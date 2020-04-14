@@ -16,7 +16,7 @@ def http_request(target, injtxt):
     if target.method == "GET":
         r = requests.get(injected_target.url, params=payload_str)
     elif target.method == "POST":
-        r = requests.post(injected_target.url, data=payload_str)
+        r = requests.post(injected_target.url, data=injected_target.payload)
     return r   
 
 
@@ -46,6 +46,7 @@ def main():
     r = http_request(target, injtxt)
 
     print('URL: ' + r.url)
+
     if ErrMode == 'Spreadsheet':
         if r.text.find("You have an error in your SQL syntax;")>= 0:    
             print("[oracleSQL] target raised error ┗( T﹏T )┛")
@@ -66,6 +67,7 @@ def main():
         else:
             print("[oracleSQL] not able to determine if \"" + injtxt + "\" was undoubtedly invalid, same page as default ¯\(°_o)/¯")
             exit (0) # default    
+
 
 
 if __name__ == "__main__":
