@@ -37,8 +37,7 @@ def main():
         url, method, vulnparam, injtxt = sys.argv[1], sys.argv[2], sys.argv[4], sys.argv[5]
         ErrMode = 'default'
     elif (len(sys.argv) == 7):
-        url, method, vulnparam, injtxt = sys.argv[1], sys.argv[2], sys.argv[4], sys.argv[5]
-        ErrMode = sys.argv[6]
+        url, method, vulnparam,ErrMode, injtxt = sys.argv[1], sys.argv[2], sys.argv[4], sys.argv[5],sys.argv[6]
 
     payload = ast.literal_eval(sys.argv[3])
     
